@@ -101,9 +101,11 @@ tablosu), CI notu. Kartla doğrulama durumu test sonucuna göre yazılır
 
 ## CI (release.yml)
 
-Edevlet workflow uyarlaması: `workflow_dispatch`, macos-14 (arm64) runner,
-`make all`, mimari (`lipo -archs` executable arm64) + `codesign --verify`
-doğrulaması. Paket dağıtımı yok.
+Edevlet workflow'unun birebir uyarlaması: `workflow_dispatch` (yalnız elle
+tetik), macos-14 (arm64) runner, `make all`, mimari + `codesign --verify`
+doğrulaması, `<APP_VERSION>_<N>` etiketiyle DMG'li GitHub Release üretimi.
+Release üretip üretmemek tetikleme anında kullanıcının kararıdır; otomatik
+tetikleyici yoktur.
 
 ## Test planı (build sonrası, kullanıcı gerçek kartla)
 
