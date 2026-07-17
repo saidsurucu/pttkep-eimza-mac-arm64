@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="https://ptt.hs01.kep.tr/download" href="pttkep-eimza.jnlp">
+
+    <information>
+        <title>PTT KEP Webmail  E-Imza Uygulaması</title>
+        <vendor>PTT</vendor>
+        <homepage href="https://ptt.hs01.kep.tr"/>
+        <description>PTT KEP Webmail  E-Imza Uygulaması</description>
+        <icon href="logo.png"/>
+        <icon kind="splash" href="logo.png"/>
+        <offline-allowed/>
+        <shortcut online="true">
+            <desktop/>
+            <menu submenu="PTT KEP E-Imza Uygulaması"/>
+        </shortcut>
+
+    </information>
+
+    <security>
+        <all-permissions/>
+    </security>
+
+    <resources>
+        <j2se version="1.7+" href="http://java.sun.com/products/autodl/j2se"/>
+        <jar href="elektronik-imza.jar" main="true"/>
+        <property name="jnlp.packEnabled" value="true"/>
+        <property name="jnlp.config" value="https://ptt.hs01.kep.tr/download/config.properties"/>
+    </resources>
+
+    <application-desc name="PTT KEP Webmail  E-Imza Uygulaması" main-class="tr.gov.ptt.kep.digitalsignature.swing.FrmApplet">
+    </application-desc>
+
+    <update check="always" policy="always"/>
+
+</jnlp>
