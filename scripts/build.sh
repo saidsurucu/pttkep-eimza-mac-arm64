@@ -41,9 +41,11 @@ ASCII_NAME="PTTKEPEImza"            # executable/CFBundleExecutable (ASCII şart
 BUNDLE_ID="tr.gov.ptt.kep.digitalsignature"
 MAIN_CLASS="tr.gov.ptt.kep.digitalsignature.swing.FrmApplet"
 MAIN_JAR="elektronik-imza.jar"
-# Görünen ürün sürümü (config.properties applet.version=10.0.1'den).
-# CFBundleVersion buna eşitlenir; yayın etiketi <APP_VERSION>_<N> olur.
-APP_VERSION="${APP_VERSION:-10.0.1}"
+# Görünen ürün sürümü (uygulama pencere başlığından doğrulandı: "PTTKEP Webmail
+# E-İmza v1.2.5"; config.properties'teki applet.version=10.0.1 ürün sürümü değil,
+# applet protokol sürümüdür). CFBundleVersion buna eşitlenir; yayın etiketi
+# <APP_VERSION>_<N> olur.
+APP_VERSION="${APP_VERSION:-1.2.5}"
 
 CODEBASE="https://ptt.hs01.kep.tr/download"
 JAR_URL="${JAR_URL:-$CODEBASE/$MAIN_JAR}"
