@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PTT KEP E-İmza DMG penceresi arka planı (kaynak).
+  Render: rsvg-convert ile 1x (660x440) ve 2x (1320x880) PNG → tiffutil HiDPI tiff.
+  (Otomatik: scripts/build.sh assets)
+  İkonlar (uygulama + Applications) Finder tarafından bunun ÜZERİNE yerleştirilir;
+  bu yüzden ikon yuvaları boş bırakılır, yalnızca ok + metin çizilir.
+  Yuva merkezleri (create-dmg ile eşleşmeli): uygulama (170,220), Applications (490,220).
+-->
+<svg width="660" height="440" viewBox="0 0 660 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"  stop-color="#f7f8fa"/>
+      <stop offset="1"  stop-color="#eceef2"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#1f2a44" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- zemin -->
+  <rect x="0" y="0" width="660" height="440" fill="url(#bg)"/>
+
+  <!-- başlık -->
+  <text x="330" y="74" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="26" font-weight="700" fill="#1a2f5e">PTT KEP E-İmza</text>
+  <text x="330" y="104" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="14" font-weight="400" fill="#5b6b86">Apple Silicon (arm64) — native</text>
+
+  <!-- ikon yuvaları (boş daireler, Finder ikonları üstüne koyacak) -->
+  <circle cx="170" cy="220" r="74" fill="#ffffff" fill-opacity="0.55" stroke="#cdd7e6" stroke-width="1.5"/>
+  <circle cx="490" cy="220" r="74" fill="#ffffff" fill-opacity="0.55" stroke="#cdd7e6" stroke-width="1.5"/>
+
+  <!-- sürükleme oku (PTT lacivert) -->
+  <g filter="url(#soft)">
+    <line x1="260" y1="220" x2="392" y2="220" stroke="#1a2f5e" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 386 198 L 420 220 L 386 242 Z" fill="#1a2f5e"/>
+  </g>
+
+  <!-- alt yönerge -->
+  <text x="330" y="360" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="17" font-weight="600" fill="#1a2f5e">Kurmak için sürükleyin</text>
+  <text x="330" y="386" text-anchor="middle"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="13" font-weight="400" fill="#5b6b86">Uygulamayı Applications klasörüne bırakın</text>
+</svg>

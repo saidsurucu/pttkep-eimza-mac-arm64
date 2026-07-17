@@ -1,0 +1,102 @@
+name: Release (arm64 .app)
+
+# Elle tetiklenir. macOS arm64 runner'da native .app üretir, sürümü
+# <APP_VERSION>_<N> olarak etiketler (ör. 1.2.5_1). <N> her yeniden
+# yayında (aynı APP_VERSION için) otomatik artar.
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'Ürün sürümü (boşsa build.sh varsayılanı = 1.2.5)'
+        required: false
+      revision:
+        description: 'Revizyon numarası (boşsa otomatik = mevcut + 1)'
+        required: false
+      jar_url:
+        description: 'elektronik-imza.jar URL (boşsa codebase varsayılanı)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14   # Apple Silicon (arm64) runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mimari doğrula (arm64 olmalı)
+        run: test "$(uname -m)" = "arm64" || { echo "Runner arm64 değil!"; exit 1; }
+
+      - name: Gömülecek arm64 Java 11 kur (Azul Zulu)
+        run: make jdk
+
+      - name: jpackage'lı 17+ JDK hazırla
+        run: make jpackage-jdk
+
+      - name: Native arm64 .app üret
+        env:
+          APP_VERSION: ${{ github.event.inputs.app_version }}
+          JAR_URL: ${{ github.event.inputs.jar_url }}
+        run: make all
+
+      - name: Mimariyi ve imzayı doğrula
+        run: |
+          APP="build/PTT KEP E-İmza.app"
+          file "$APP/Contents/MacOS/PTTKEPEImza" | grep -q arm64 || { echo "Launcher arm64 değil!"; exit 1; }
+          codesign --verify --strict "$APP"
+
+      - name: Sürümü belirle (<APP_VERSION>_<N>)
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_REV: ${{ github.event.inputs.revision }}
+        run: |
+          APP_VER=$(plutil -extract CFBundleVersion raw "build/PTT KEP E-İmza.app/Contents/Info.plist")
+          echo "Ürün sürümü: $APP_VER"
+          if [ -n "$INPUT_REV" ]; then
+            REV="$INPUT_REV"
+          else
+            LAST=$(gh api "repos/${{ github.repository }}/releases" --paginate --jq '.[].tag_name' 2>/dev/null \
+              | grep "^${APP_VER}_" | sed "s/^${APP_VER}_//" | sort -n | tail -1)
+            REV=$(( ${LAST:-0} + 1 ))
+          fi
+          TAG="${APP_VER}_${REV}"
+          echo "Yayın etiketi: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: DMG üret (sürükle-bırak yerleşimli)
+        env:
+          DMG_OUT: ${{ github.workspace }}/PTTKEPEImza-${{ steps.ver.outputs.tag }}-arm64.dmg
+        run: |
+          brew list create-dmg >/dev/null 2>&1 || brew install create-dmg
+          make dmg
+
+      - name: GitHub Release oluştur + dosyayı ekle
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
+          files: PTTKEPEImza-${{ steps.ver.outputs.tag }}-arm64.dmg
+          body: |
+            Native Apple Silicon (arm64) PTT KEP E-İmza build — Rosetta gerektirmez.
+            Java gömülü gelir; ayrıca bir şey kurmaya gerek yok.
+
+            ## Kurulum
+            1. Aşağıdaki **`.dmg` dosyasını indirip** çift tıklayın; bir pencere açılır.
+            2. Açılan pencerede **`PTT KEP E-İmza`** simgesini, ortadaki okun gösterdiği gibi
+               yanındaki **Applications** klasörünün üzerine **sürükleyin**.
+            3. İlk açılışta macOS **"geliştirici doğrulanamadı"** diyebilir. Bunu bir kez aşmak için:
+               1. **Terminal** uygulamasını açın: `Command (⌘) + Boşluk`'a basın, **Terminal** yazıp **Enter**'a basın.
+               2. Şu satırı kopyalayın, Terminal'e yapıştırıp **Enter**'a basın:
+                  ```
+                  xattr -dr com.apple.quarantine "/Applications/PTT KEP E-İmza.app"
+                  ```
+               3. Komut bir şey yazmadan biter (normaldir). Artık uygulamayı çift tıklayarak açabilirsiniz.
+
+            ## Not
+            - ⚠️ **arm64 AKİS sürücüsü ŞART:** sistemde **Apple Silicon (arm64) AKİS** PKCS#11
+              modülü kurulu olmalıdır (Intel-only sürücü arm64 uygulamaya yüklenmez). Kurulum
+              için README'deki "Apple Silicon AKİS sürücüsü kurulumu" bölümüne bakın.
+            - ✅ Apple Silicon'da gerçek kartla **tam imzalama** (sertifika → PIN → imza)
+              doğrulandı.

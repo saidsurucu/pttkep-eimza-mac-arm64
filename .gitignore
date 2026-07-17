@@ -1,0 +1,9 @@
+# Build çıktıları
+/build/
+
+# İndirilen kaynaklar (jar, ikon, Zulu arşivleri) — yeniden indirilebilir
+/downloads/
+
+# macOS
+.DS_Store
+._*
