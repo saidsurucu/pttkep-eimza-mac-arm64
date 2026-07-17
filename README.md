@@ -13,8 +13,9 @@ arm64 Java 11 runtime'ı** ile **çift tıklayıp açabileceğiniz native bir
 > ptt.hs01.kep.tr'den **siz** indirir ve native `.app`'i **siz** üretirsiniz.
 > "Olduğu gibi" sunulur.
 
-> ⚠️ Gerçek kartla imzalama akışı **henüz doğrulanmadı** (uygulama açılışı
-> doğrulandı). Sonuçlar test edildikçe bu not güncellenecektir.
+> ✅ Apple Silicon'da **gerçek kartla tam imzalama** (sertifika → PIN → imza)
+> doğrulandı. (Tek bir kurulumda test edildi; yine de farklı kart/sürücü
+> sürümlerinde değişiklik olabilir.)
 
 ---
 

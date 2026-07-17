@@ -98,3 +98,5 @@ jobs:
             - ⚠️ **arm64 AKİS sürücüsü ŞART:** sistemde **Apple Silicon (arm64) AKİS** PKCS#11
               modülü kurulu olmalıdır (Intel-only sürücü arm64 uygulamaya yüklenmez). Kurulum
               için README'deki "Apple Silicon AKİS sürücüsü kurulumu" bölümüne bakın.
+            - ✅ Apple Silicon'da gerçek kartla **tam imzalama** (sertifika → PIN → imza)
+              doğrulandı.
