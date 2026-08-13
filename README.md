@@ -30,6 +30,9 @@ basın:
 curl -fsSL https://raw.githubusercontent.com/saidsurucu/pttkep-eimza-mac-arm64/main/kur.sh | bash
 ```
 
+> Terminal'iniz Rosetta (x86_64) modunda açılmışsa betik bunu algılayıp kendini
+> otomatik olarak arm64'e geçirir — `arch -arm64` yazmanıza gerek yoktur.
+
 Hepsi bu kadar. Manuel indirme, klasöre girme, Java kurma gibi adımlar **yok**. Bu
 komut gerisini sizin için yapar:
 

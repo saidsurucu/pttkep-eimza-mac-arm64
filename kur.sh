@@ -50,13 +50,46 @@ ensure_clt() {
 	ok "Komut satırı araçları kuruldu"
 }
 
+# ----- "sudo ./kur.sh" ile başlatıldıysa normal kullanıcıya dön -----
+# Root olarak yazılan kaynak kod/önbellek kullanıcının ev dizininde root'a ait
+# kalır ve sonraki (sudo'suz) kurulum "Permission denied" ile düşer. Yönetici
+# izni yalnızca /Applications adımında, gerektiği anda isteniyor.
+if [ "$(id -u)" = "0" ]; then
+	SRC0="${BASH_SOURCE[0]:-}"
+	if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ] && [ -f "$SRC0" ]; then
+		warn "Kurulum 'sudo' ile başlatıldı; normal kullanıcı ($SUDO_USER) olarak devam ediliyor."
+		exec sudo -u "$SUDO_USER" -H /bin/bash "$(cd "$(dirname "$SRC0")" && pwd)/$(basename "$SRC0")"
+	fi
+	die "Bu kurulumu 'sudo' ile çalıştırmayın. Normal kullanıcı olarak: ./kur.sh"
+fi
+
 # ----- 0) Ortam kontrolü -----
 step "Ortam denetimi"
 [ "$(uname -s)" = "Darwin" ] || die "Bu betik yalnızca macOS içindir."
+# Donanım Apple Silicon olsa bile Terminal x86_64 (Rosetta) modunda açılmış
+# olabilir — o zaman `uname -m` x86_64 döner ve arm64 çalışma zamanı üretilemez.
+# Donanım gerçekten arm64 ise betiği arm64 olarak yeniden başlatıyoruz.
+ARCH_SWITCH=0
 if [ "$(uname -m)" != "arm64" ]; then
-	die "Bu betik Apple Silicon (M1/M2/M3/M4) içindir. Mevcut mimari: $(uname -m)"
+	if [ "$(sysctl -n hw.optional.arm64 2>/dev/null || true)" = "1" ] \
+	   && [ "${KUR_ARCH_SWITCHED:-0}" != "1" ] && command -v arch >/dev/null 2>&1; then
+		warn "Terminal Rosetta (x86_64) modunda; otomatik olarak arm64'e geçilecek."
+		ARCH_SWITCH=1
+	else
+		die "Bu betik Apple Silicon (M1/M2/M3/M4) içindir. Mevcut mimari: $(uname -m)"
+	fi
+else
+	ok "Apple Silicon Mac algılandı"
 fi
-ok "Apple Silicon Mac algılandı"
+
+# Rosetta terminalinde başlatıldıysak betiği arm64 olarak yeniden başlatırız.
+# (Hemen yapamıyoruz: "curl | bash" ile çalıştırıldığında yeniden başlatılacak
+#  bir dosya henüz diskte yok — kaynak kod indikten sonra çağrılıyor.)
+reexec_arm64() {
+	say "arm64 mimarisine geçiliyor…"
+	export KUR_ARCH_SWITCHED=1
+	exec arch -arm64 /bin/bash "$1"
+}
 
 # ----- Önyükleme: depo klasörünün içinde miyiz? -----
 # curl ... | bash ile çalıştırıldığında BASH_SOURCE boş/geçersiz olur; bu durumda
@@ -81,10 +114,14 @@ if [ -z "$SCRIPT_DIR" ] || [ ! -f "$SCRIPT_DIR/scripts/build.sh" ]; then
 	fi
 	ok "Kaynak kod hazır"
 	# İndirilen depodaki kur.sh'yi devral (bu noktadan sonrasını o yürütür).
+	if [ "$ARCH_SWITCH" = "1" ]; then reexec_arm64 "$CLONE_DIR/kur.sh"; fi
 	exec bash "$CLONE_DIR/kur.sh"
 fi
 
 cd "$SCRIPT_DIR"
+
+# Kaynak kod diskte; Rosetta terminalinden geldiysek burada arm64'e geçiyoruz.
+if [ "$ARCH_SWITCH" = "1" ]; then reexec_arm64 "$SCRIPT_DIR/kur.sh"; fi
 
 APP_NAME="PTT KEP E-İmza.app"
 BUILT_APP="$SCRIPT_DIR/build/$APP_NAME"
