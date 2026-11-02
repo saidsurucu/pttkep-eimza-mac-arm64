@@ -123,7 +123,10 @@ cd "$SCRIPT_DIR"
 # Kaynak kod diskte; Rosetta terminalinden geldiysek burada arm64'e geçiyoruz.
 if [ "$ARCH_SWITCH" = "1" ]; then reexec_arm64 "$SCRIPT_DIR/kur.sh"; fi
 
-APP_NAME="PTT KEP E-İmza.app"
+case "${ARAYUZ:-webmail}" in
+	basvuru) APP_NAME="PTT KEP Başvuru E-İmza.app" ;;
+	*)       APP_NAME="PTT KEP E-İmza.app" ;;
+esac
 BUILT_APP="$SCRIPT_DIR/build/$APP_NAME"
 DEST_APP="/Applications/$APP_NAME"
 
@@ -150,7 +153,7 @@ ok "Uygulama hazır: $BUILT_APP"
 step "Applications'a kurulum"
 if pgrep -f "$APP_NAME/Contents/MacOS" >/dev/null 2>&1; then
 	warn "Uygulama açık görünüyor; kapatılıyor…"
-	osascript -e 'tell application "PTT KEP E-İmza" to quit' >/dev/null 2>&1 || true
+	osascript -e "tell application \"${APP_NAME%.app}\" to quit" >/dev/null 2>&1 || true
 	sleep 2
 fi
 if [ -e "$DEST_APP" ]; then
@@ -167,7 +170,7 @@ fi
 
 # ----- Bitti -----
 printf '\n'
-ok "${BOLD}BİTTİ.${RST} PTT KEP E-İmza artık Launchpad ve Applications'ta."
+ok "${BOLD}BİTTİ.${RST} ${APP_NAME%.app} artık Launchpad ve Applications'ta."
 say "Açmak için: ${BOLD}open \"$DEST_APP\"${RST}"
 printf '\n'
 warn "E-imza kullanacaksanız: TÜBİTAK AKİS'in ${BOLD}Apple Silicon (Arm)${RST} sürücüsünü kurun"

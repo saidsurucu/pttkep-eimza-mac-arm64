@@ -60,6 +60,25 @@ güncel sürüm otomatik inecek ve paketlenecek.**
 > ⚠️ **E-imza için arm64 AKİS sürücüsü ŞART** (aşağıdaki bölüm). Uygulama native
 > arm64'tür; kart sürücünüz de arm64 olmalıdır.
 
+### Hangi arayüzü kullanıyorsunuz?
+
+Her PTT KEP arayüzünün kendi e-imza uygulaması vardır ve bir arayüzde başlatılan
+işlem diğerinin uygulamasıyla tamamlanamaz. Yanlış uygulamayı kullanırsanız şu
+hatayı alırsınız: *"İmzalama işlemi için E-İmza uygulamasını işlem yapmak
+istediğiniz arayüzden indirerek işleminize devam ediniz."*
+
+| Giriş yaptığınız adres | Kurulum |
+|------------------------|---------|
+| `ptt.hs01.kep.tr` (webmail) | Yukarıdaki tek satır → **PTT KEP E-İmza** |
+| `pttbasvuru.hs01.kep.tr` (başvuru) | Aşağıdaki tek satır → **PTT KEP Başvuru E-İmza** |
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/saidsurucu/pttkep-eimza-mac-arm64/main/kur.sh | ARAYUZ=basvuru bash
+```
+
+İki uygulama yan yana kurulabilir. Sorun yaşarsanız günlük `~/PTTEimzaLog`
+dosyasındadır; her açılışta sıfırlanır, yani uygulamayı yeniden açmadan önce bakın.
+
 ---
 
 ## ⚠️ Apple Silicon (arm64) AKİS sürücüsü kurulumu (zorunlu)
@@ -115,10 +134,15 @@ ile yeniden render edebilirsiniz (`brew install librsvg`). Tek tek hedefler içi
   `--java-options` ile bu property `.app`'e gömülür — yoksa uygulama sunucuyu
   bulamaz.
 - **Kart erişimi (e-Devlet'ten fark):** PTT KEP jar'ı IAIK PKCS#11 wrapper
-  DEĞİL, TÜBİTAK ESYA API (`APDUSmartCard`) + `javax.smartcardio` kullanır;
-  jar'da kart erişimi için native kütüphane taşınmaz. Bu yüzden e-Devlet
-  paketleyicisindeki Javassist connect-fix patch'i burada gerekmez. AKİS
-  middleware'inin arm64 sürümü sistemde kurulu olmalıdır.
+  DEĞİL, TÜBİTAK ESYA API kullanır. Okuyucu `javax.smartcardio` ile bulunur;
+  PIN ve imza `P11SmartCard` → JDK'nın `sun.security.pkcs11.wrapper` sınıfları →
+  `libakisp11.dylib` yolundan gider. Jar'da kart erişimi için native kütüphane
+  taşınmaz. Bu yüzden e-Devlet paketleyicisindeki Javassist connect-fix patch'i
+  burada gerekmez. AKİS middleware'inin arm64 sürümü sistemde kurulu olmalıdır.
+- **Arayüzler:** `ARAYUZ=basvuru make all`, jar ve config'i
+  `pttbasvuru.hs01.kep.tr`'den alıp ayrı ad ve bundle id ile paketler. Bu
+  arayüzün config'indeki `getvers_url=version_url` geçerli bir adres değildir;
+  günlükte `Backend bağlandılamadı` satırı görünür ama açılışı durdurmaz.
 - **İkon:** codebase'deki `logo.png` 404 verdiğinden ikon jar içindeki
   `images/logo.png`'den (200×200) çıkarılıp `.icns`'e dönüştürülür.
 - **codesign + Türkçe karakter:** `.app` adındaki `İ` gibi karakterler imzayı

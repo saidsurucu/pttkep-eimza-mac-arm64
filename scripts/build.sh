@@ -12,9 +12,10 @@
 #   - elektronik-imza.jar = Java 7 bytecode (major 51) → Java 11'de sorunsuz çalışır.
 #
 # Kart erişimi (KRİTİK FARK — e-Devlet'ten):
-#   - PTT KEP, IAIK PKCS#11 wrapper DEĞİL, TÜBİTAK ESYA API (APDUSmartCard) +
-#     javax.smartcardio kullanır (jnasmartcardio sınıfları gömülü ama JNA yok →
-#     JVM'in yerleşik smartcardio'su devrede). Jar'da IAIK native'i yok.
+#   - PTT KEP, IAIK PKCS#11 wrapper DEĞİL, TÜBİTAK ESYA API kullanır. Kart/okuyucu
+#     javax.smartcardio ile bulunur; PIN ve imza ise P11SmartCard → JDK'nın
+#     sun.security.pkcs11.wrapper sınıfları → libakisp11.dylib yolundan gider.
+#     Jar'da IAIK native'i yok.
 #   - Bu yüzden e-Devlet'teki Javassist connect-fix patch'i GEREKMEZ.
 #   - AKİS için kullanıcıda arm64 AKİS middleware kurulu olmalı.
 #
@@ -22,6 +23,11 @@
 #   - JNLP, uygulamaya jnlp.config property'si geçirir; sunucu adresleri
 #     (getvers/getdata/setdata) bu config.properties'ten okunur. .app'e
 #     -Djnlp.config=<URL> gömülmezse uygulama sunucuyu bulamaz.
+#   - Her arayüzün kendi jar + config'i vardır ve sunucu başka arayüzde başlatılan
+#     işlemi reddeder ("...işlem yapmak istediğiniz arayüzden indirerek...").
+#     ARAYUZ=webmail (vars.) ptt.hs01.kep.tr, ARAYUZ=basvuru pttbasvuru.hs01.kep.tr.
+#
+# Günlük: ~/PTTEimzaLog (her açılışta sıfırlanır).
 #
 # Tam JRE şart (jlink-strip DEĞİL): smartcardio/crypto provider'ları için
 #   --runtime-image <tam arm64 Zulu 11>.
@@ -35,10 +41,27 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD="$ROOT/build"
 DOWNLOADS="$ROOT/downloads"
 
-APP_NAME="PTT KEP E-İmza"           # görünen ad (Türkçe)
+ARAYUZ="${ARAYUZ:-webmail}"         # webmail | basvuru (bkz. dosya başı)
+case "$ARAYUZ" in
+	webmail)
+		APP_NAME="PTT KEP E-İmza"           # görünen ad (Türkçe)
+		ASCII_NAME="PTTKEPEImza"            # executable/CFBundleExecutable (ASCII şart, codesign)
+		BUNDLE_ID="tr.gov.ptt.kep.digitalsignature"
+		CODEBASE="https://ptt.hs01.kep.tr/download"
+		JAR_DIR="$DOWNLOADS"
+		;;
+	basvuru)
+		APP_NAME="PTT KEP Başvuru E-İmza"
+		ASCII_NAME="PTTKEPBasvuruEImza"
+		BUNDLE_ID="tr.gov.ptt.kep.digitalsignature.basvuru"
+		CODEBASE="https://pttbasvuru.hs01.kep.tr/download"
+		JAR_DIR="$DOWNLOADS/basvuru"        # jar'lar arayüze göre farklı; önbellek karışmasın
+		;;
+	*)
+		printf 'Bilinmeyen ARAYUZ: %s (webmail | basvuru)\n' "$ARAYUZ" >&2; exit 1
+		;;
+esac
 APP="$BUILD/$APP_NAME.app"
-ASCII_NAME="PTTKEPEImza"            # executable/CFBundleExecutable (ASCII şart, codesign)
-BUNDLE_ID="tr.gov.ptt.kep.digitalsignature"
 MAIN_CLASS="tr.gov.ptt.kep.digitalsignature.swing.FrmApplet"
 MAIN_JAR="elektronik-imza.jar"
 # Görünen ürün sürümü (uygulama pencere başlığından doğrulandı: "PTTKEP Webmail
@@ -47,12 +70,11 @@ MAIN_JAR="elektronik-imza.jar"
 # <APP_VERSION>_<N> olur.
 APP_VERSION="${APP_VERSION:-1.2.5}"
 
-CODEBASE="https://ptt.hs01.kep.tr/download"
 JAR_URL="${JAR_URL:-$CODEBASE/$MAIN_JAR}"
 CONFIG_URL="$CODEBASE/config.properties"
-JAR_FILE="$DOWNLOADS/$MAIN_JAR"
+JAR_FILE="$JAR_DIR/$MAIN_JAR"
 # İkon codebase'de YOK (logo.png 404) → jar içindeki images/logo.png (200x200) çıkarılır.
-ICON_PNG="$DOWNLOADS/logo.png"
+ICON_PNG="$JAR_DIR/logo.png"
 ICON_IN_JAR="images/logo.png"
 ICNS="$BUILD/$ASCII_NAME.icns"
 
@@ -133,7 +155,7 @@ jpackage_jdk() {
 
 download() {
 	c_info "elektronik-imza.jar indiriliyor (codebase: $CODEBASE)…"
-	mkdir -p "$DOWNLOADS" "$BUILD"
+	mkdir -p "$JAR_DIR" "$BUILD"
 	[ -s "$JAR_FILE" ] && c_ok "Önbellekten: $JAR_FILE ($(du -h "$JAR_FILE" | cut -f1))" \
 		|| { c_info "İndiriliyor: $JAR_URL"; curl -fL --retry 3 -o "$JAR_FILE" "$JAR_URL"; }
 	# Doğrula: main-class + gömülü ikon
@@ -288,7 +310,7 @@ Hedefler:
   dmg          sürükle-bırak yerleşimli .dmg üret (create-dmg; DMG_OUT ile ad)
   clean / distclean
 
-Ortam: JAR_URL (kaynak), APP_VERSION (vars: $APP_VERSION)
+Ortam: ARAYUZ (webmail | basvuru, vars: webmail), JAR_URL (kaynak), APP_VERSION (vars: $APP_VERSION)
 EOF
 }
 
